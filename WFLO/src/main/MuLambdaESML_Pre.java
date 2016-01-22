@@ -154,7 +154,7 @@ public class MuLambdaESML_Pre extends MuLambdaESML {
 		System.out.println("Colected Data Size:" + layoutsData.size());
 
 		// Using collected data to train a surrogate model, then use it as a predictor.
-		trainClassifier(classifier);
+		trainClassifier();
 
 		do {
 			breeding_ML();

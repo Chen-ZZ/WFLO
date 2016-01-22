@@ -62,7 +62,6 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 		Arrays.sort(fitnesses);
 
 		// Using the expensive real evaluation function to re-evaluate these lambda_star individuals.
-		ArrayList<Double> temp_fitnesses = new ArrayList<>();
 		for (int i = 0; i < lambda_star; i++) {
 			wfle.evaluate(populations.get(tempFitnesses.indexOf(fitnesses[i])));
 			fitnesses[i] = wfle.getEnergyCost();
@@ -145,7 +144,7 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 		System.out.println("Colected Data Size:" + layoutsData.size());
 
 		// Using collected data to train a surrogate model, then use it as a predictor.
-		trainClassifier(classifier);
+		trainClassifier();
 
 		do {
 			breeding_ML();

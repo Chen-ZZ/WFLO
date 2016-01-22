@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import my.weka.MyDenseInstance;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.core.Attribute;
@@ -31,9 +32,13 @@ public class MuLambdaESML {
 
 	static final String _CROSSOVER = "crossover";
 	static final String _MUTATE = "mutate";
+	String operatorFlag; // for crossover breeding or mutate breeding.
 
 	// layout array with energy cost.
 	HashMap<double[][], Double> layoutsData;
+	Classifier classifier;
+	FastVector attributes;
+	Instances trainData;
 
 	WindFarmLayoutEvaluator wfle;
 	ArrayList<double[][]> populations; // Array list to store the entire population.
@@ -49,13 +54,8 @@ public class MuLambdaESML {
 	int mu; // number of parents selected.
 	int lambda; // number of population.
 	int lambda_star; // number of individual selection strategies (for Best & Pre).
-	double mutation_rate;
 
-	String operatorFlag;
-
-	Classifier classifier;
-	FastVector attributes;
-	Instances trainData;
+	String dataFormat; // raw data format or polar data format.
 
 	// wind farm parameters
 	double farmHeight;
@@ -643,10 +643,10 @@ public class MuLambdaESML {
 	/**
 	 * @author Chen
 	 * @param layout
-	 *            layout data in a 2-D array form.
+	 *            layout data in Raw 2-D array formmat.
 	 * @return weka instance
 	 */
-	private Instance toInstance(double[][] layout) {
+	private Instance toInstance_Raw(double[][] layout) {
 
 		List<Double> tempValues = new ArrayList<Double>();
 
@@ -654,7 +654,7 @@ public class MuLambdaESML {
 			tempValues.add(coordinates[0]);
 			tempValues.add(coordinates[1]);
 		}
-		tempValues.add(0.0);// the class value.
+		// tempValues.add(0.0);// the class value.
 
 		Instance tempInstance = new DenseInstance(1.0,
 				tempValues.stream().mapToDouble(Double::doubleValue).toArray());
@@ -666,18 +666,79 @@ public class MuLambdaESML {
 
 	/**
 	 * @author Chen
+	 * @param layout
+	 *            layout data in Raw 2-D array formmat.
+	 * @return weka instance
+	 */
+	private Instance toInstance_Raw(double[][] layout, double coe) {
+
+		List<Double> tempValues = new ArrayList<Double>();
+
+		for (double[] coordinates : layout) {
+			tempValues.add(coordinates[0]);
+			tempValues.add(coordinates[1]);
+		}
+		tempValues.add(coe);// the class value.
+
+		Instance tempInstance = new DenseInstance(1.0,
+				tempValues.stream().mapToDouble(Double::doubleValue).toArray());
+
+		tempInstance.setDataset(trainData);
+
+		return tempInstance;
+	}
+
+	/**
+	 * @author Chen
+	 * @param layout
+	 *            layout data in Sorted Polar coordinates format.
+	 * @return weka instance
+	 */
+	private Instance toInstance_Polar(double[][] layout, double coe) {
+
+		List<Double> tempValues = new ArrayList<Double>();
+
+		for (double[] coordinates : layout) {
+			tempValues.add(Math.hypot(coordinates[0], coordinates[1]));
+			tempValues.add(Math.atan2(coordinates[1], coordinates[0]));
+		}
+		tempValues.add(coe);// the class value.
+
+		Instance tempInstance = new DenseInstance(1.0,
+				tempValues.stream().mapToDouble(Double::doubleValue).toArray());
+
+		tempInstance.setDataset(trainData);
+
+		return tempInstance;
+
+	}
+
+	/**
+	 * @author Chen
 	 * @param classifier
 	 *            A classifier specified by user.
 	 */
-	public void trainClassifier(Classifier classifier) {
+	public void trainClassifier() {
 
-		// Fill with data
+		// Filling in training data
 		for (Map.Entry<double[][], Double> entry : layoutsData.entrySet()) {
 
-			Instance tempInstance = toInstance(entry.getKey());
+			Instance tempInstance;
+			// Transform the raw type data into polar coordinates
+			if (dataFormat.equals("polar")) {
+				tempInstance = toInstance_Polar(entry.getKey(), entry.getValue());
+			} else {
+				tempInstance = toInstance_Raw(entry.getKey(), entry.getValue());
+			}
+
 			tempInstance.setClassValue(entry.getValue());
 
 			trainData.add(tempInstance);
+		}
+
+		// If the dataset are in Polar format, then sort all the coordinates according to distance.
+		if (dataFormat.equals("polar")) {
+			trainData = sortPolarInstances(trainData);
 		}
 
 		// Train the classifier
@@ -697,10 +758,44 @@ public class MuLambdaESML {
 
 	}
 
+	public Instances sortPolarInstances(Instances trainData) {
+		System.out.println("--- Sorting Polar Coordinates...");
+
+		double[] tempDistances = new double[(trainData.get(0).numAttributes() - 1) / 2];
+		Map<Double, Double> tempAttributes = new HashMap<>();
+		Instances tempData = new Instances(trainData);
+		tempData.removeAll(tempData);
+
+		for (int i = 0; i < trainData.numInstances(); i++) {
+			for (int j = 0; j < (trainData.numAttributes() - 1) / 2; j++) {
+				tempDistances[j] = trainData.get(i).value(2 * j);
+				tempAttributes.put(trainData.get(i).value(2 * j), trainData.get(i).value(2 * j + 1));
+			}
+
+			Arrays.sort(tempDistances);
+
+			List<Double> tempValues = new ArrayList<Double>();
+
+			for (double distance : tempDistances) {
+				tempValues.add(distance);
+				tempValues.add(tempAttributes.get(distance));
+			}
+			tempValues.add(trainData.get(i).classValue());// the class value.
+
+			Instance tempInstance = new MyDenseInstance(1.0,
+					tempValues.stream().mapToDouble(Double::doubleValue).toArray());
+
+			tempInstance.setDataset(trainData);
+			tempData.add(tempInstance);
+		}
+
+		return tempData;
+	}
+
 	public double predictCoE(double[][] layout) {
 
 		try {
-			return classifier.classifyInstance(toInstance(layout));
+			return classifier.classifyInstance(toInstance_Raw(layout));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Double.MAX_VALUE;
@@ -726,7 +821,7 @@ public class MuLambdaESML {
 		System.out.println("Colected Data Size:" + layoutsData.size());
 
 		// Using collected data to train a surrogate model, then use it as a predictor.
-		trainClassifier(classifier);
+		trainClassifier();
 
 		do {
 			breeding();
@@ -761,6 +856,14 @@ public class MuLambdaESML {
 
 	public void setLambda(int lambda) {
 		this.lambda = lambda;
+	}
+
+	public String getDataFormat() {
+		return dataFormat;
+	}
+
+	public void setDataFormat(String dataFormat) {
+		this.dataFormat = dataFormat;
 	}
 
 	public int getMaxEvaluations() {

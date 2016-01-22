@@ -32,13 +32,14 @@ public class MuLambdaES {
 	double mutation_rate;
 
 	String operatorFlag;
+	String dataFormat; // the format of turbine coordinates: raw, polar or random projection.
 
 	// wind farm parameters
 	double farmHeight;
 	double farmWidth;
 	double interval;
 	double minDistance;
-	double blockSize; // the size of each block is approximately 1km x 1km.
+	double blockSize; // the size of each block is 1km x 1km.
 	int block_X;
 	int block_Y;
 
@@ -48,13 +49,7 @@ public class MuLambdaES {
 		wfle = evaluator;
 		random = new Random();
 		bestFitness = Double.MAX_VALUE;
-
-		// num_Turbines = 710;
-		// num_pop = 5;
-		// mu = 2;
-		// maxEvaluations = 2000;
 		blockSize = 1000;
-
 	}
 
 	private void evaluate() {
@@ -85,7 +80,6 @@ public class MuLambdaES {
 		}
 
 		// System.out.println(wfle.getNumberOfEvaluation());
-
 	}
 
 	private void initialize() {

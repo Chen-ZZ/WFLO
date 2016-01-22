@@ -12,7 +12,7 @@ public class mainESML {
 
 	// "ks1", "ks2", "competition_1", "competition_3"
 
-	static String[] scenarios = { "competition_3" };
+	static String[] scenarios = { "ks1" };
 
 	static final Logger crossoverLogger = Logger.getLogger(mainES.class);
 	static final Logger mutateLogger = Logger.getLogger(mainES.class);
@@ -21,14 +21,34 @@ public class mainESML {
 
 	public static void main(String[] args) {
 
-		int mu = 1;
-		int lambda = 1;
 		int num_T = 100;
-		int maxEvaluations = 2000;
 
-		int hiddenlayers = 20;
+		int mu = 6;
+		int lambda = 12;
+		int runs = 1;
+		int maxEvaluations = 200;
 
-		String options_String = "-H " + hiddenlayers;
+		String dataFormat = "polar"; // Raw data format or Polar data format
+
+		// Parameters for Multilayer Perceptron Classifier
+		int hiddenlayers = 10;
+		double learningRate = 0.3;
+		double momentum = 0.2;
+		String options_MLP = "-L " + learningRate + " -H " + hiddenlayers + " -M " + momentum;
+
+		// Parameters for M5P Classifier
+		int minNumInstances = 5;
+		int numDecimalPlaces = 2;
+		String options_M5P = "-H " + hiddenlayers + " -N " + numDecimalPlaces;
+
+		Classifier mlp = new MultilayerPerceptron();
+		String[] options;
+		try {
+			options = Utils.splitOptions(options_MLP);
+			((MultilayerPerceptron) mlp).setOptions(options);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 
 		for (String scenario : scenarios) {
 			String crossover_ML_LogFile = "Logs_ML/" + scenario + "_" + String.valueOf(mu) + "_"
@@ -65,50 +85,48 @@ public class mainESML {
 
 				System.out.println(crossover_ML_LogFile);
 
-				for (int i = 0; i < 30; i++) {
+				for (int i = 0; i < runs; i++) {
 
-					MuLambdaESML esml = new MuLambdaESML(wfle);
+					MuLambdaESML_Best esml = new MuLambdaESML_Best(wfle);
 					esml.setMaxEvaluations(maxEvaluations);
 					esml.setTrainEvaluations(maxEvaluations / 2);
 					esml.setNum_Turbines(num_T);
 					esml.setMu(mu);
 					esml.setLambda(lambda);
+					esml.setDataFormat(dataFormat);
 					esml.setOperatorFlag("crossover");
 
-					Classifier mlp = new MultilayerPerceptron();
-					String[] options = Utils.splitOptions(options_String);
-					((MultilayerPerceptron) mlp).setOptions(options);
 					esml.setClassifier(mlp);
 
 					String bestResult = String.valueOf(esml.run());
-					crossoverLogger.info(bestResult);
+					// crossoverLogger.info(bestResult);
 				}
 
-				mutateLogger.removeAllAppenders();
-				FileAppender mutateAppender = new FileAppender(layout, mutate_ML_LogFile, false);
-				mutateAppender.setImmediateFlush(true);
-				mutateLogger.addAppender(mutateAppender);
-
-				System.out.println(mutate_ML_LogFile);
-
-				for (int i = 0; i < 30; i++) {
-
-					MuLambdaESML esml = new MuLambdaESML(wfle);
-					esml.setMaxEvaluations(maxEvaluations);
-					esml.setTrainEvaluations(maxEvaluations / 2);
-					esml.setNum_Turbines(num_T);
-					esml.setMu(mu);
-					esml.setLambda(lambda);
-					esml.setOperatorFlag("mutate");
-
-					Classifier mlp = new MultilayerPerceptron();
-					String[] options = Utils.splitOptions(options_String);
-					((MultilayerPerceptron) mlp).setOptions(options);
-					esml.setClassifier(mlp);
-
-					String bestResult = String.valueOf(esml.run());
-					mutateLogger.info(bestResult);
-				}
+				// mutateLogger.removeAllAppenders();
+				// FileAppender mutateAppender = new FileAppender(layout, mutate_ML_LogFile, false);
+				// mutateAppender.setImmediateFlush(true);
+				// mutateLogger.addAppender(mutateAppender);
+				//
+				// System.out.println(mutate_ML_LogFile);
+				//
+				// for (int i = 0; i < 30; i++) {
+				//
+				// MuLambdaESML esml = new MuLambdaESML(wfle);
+				// esml.setMaxEvaluations(maxEvaluations);
+				// esml.setTrainEvaluations(maxEvaluations / 2);
+				// esml.setNum_Turbines(num_T);
+				// esml.setMu(mu);
+				// esml.setLambda(lambda);
+				// esml.setOperatorFlag("mutate");
+				//
+				// Classifier mlp = new MultilayerPerceptron();
+				// String[] options = Utils.splitOptions(options_String);
+				// ((MultilayerPerceptron) mlp).setOptions(options);
+				// esml.setClassifier(mlp);
+				//
+				// String bestResult = String.valueOf(esml.run());
+				// mutateLogger.info(bestResult);
+				// }
 
 			} catch (Exception e) {
 				e.printStackTrace();
