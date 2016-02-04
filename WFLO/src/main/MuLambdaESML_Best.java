@@ -69,7 +69,7 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 
 		// Finding out is there any improvement.
 		double minFitness = Double.MAX_VALUE;
-		for (int p = 0; p < fitnesses.length; p++) {
+		for (int p = 0; p < lambda_star; p++) { // Used to be p < fitness.length
 			if (fitnesses[p] < minFitness) {
 				minFitness = fitnesses[p];
 			}

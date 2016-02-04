@@ -101,7 +101,7 @@ public class MuLambdaESML {
 				System.out.println(bestFitness);
 			}
 
-			if (layoutsData.size() < 2000 && !layoutsData.containsKey(layout)) {
+			if (layoutsData.size() < trainEvaluations && !layoutsData.containsKey(layout)) {
 				layoutsData.put(layout, coe);
 			}
 
@@ -714,9 +714,7 @@ public class MuLambdaESML {
 	}
 
 	/**
-	 * @author Chen
-	 * @param classifier
-	 *            A classifier specified by user.
+	 * @author Chen A classifier specified by user.
 	 */
 	public void trainClassifier() {
 

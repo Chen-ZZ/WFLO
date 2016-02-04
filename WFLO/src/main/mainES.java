@@ -8,15 +8,15 @@ public class mainES {
 
 	// "ks1", "ks2", "competition_1", "competition_3"
 
-	static String[] scenarios = { "competition_3" };
+	static String[] scenarios = { "ks1", "ks2" };
 
 	static final Logger crossoverLogger = Logger.getLogger(mainES.class);
 	static final Logger mutateLogger = Logger.getLogger(mainES.class);
 
 	static PatternLayout layout = new PatternLayout("%m%n");
 
-	static int mu = 5;
-	static int lambda = 10;
+	static int mu = 6;
+	static int lambda = 12;
 	static int num_T = 100;
 	static int maxEvaluations = 2000;
 	static int runs = 30;
@@ -24,9 +24,9 @@ public class mainES {
 	public static void main(String argv[]) {
 
 		for (String scenario : scenarios) {
-			String crossoverLogFile = "Logs_(mu+lambda)/" + scenario + "_" + "(" + String.valueOf(mu) + "+"
+			String crossoverLogFile = "Logs_(6,12)/" + scenario + "_" + "(" + String.valueOf(mu) + "+"
 					+ String.valueOf(lambda) + ")" + "_" + "ES_block_crossover.log";
-			String mutateLogFile = "Logs_(mu+lambda)/" + scenario + "_" + "(" + String.valueOf(mu) + "+"
+			String mutateLogFile = "Logs_(6,12)/" + scenario + "_" + "(" + String.valueOf(mu) + "+"
 					+ String.valueOf(lambda) + ")" + "_" + "ES_block_mutate.log";
 
 			switch (scenario) {
@@ -65,7 +65,7 @@ public class mainES {
 					es.setLambda(lambda);
 					es.setOperatorFlag("crossover");
 
-					String bestResult = String.valueOf(es.run_Plus_ES());
+					String bestResult = String.valueOf(es.run_Dot_ES());
 					crossoverLogger.info(bestResult);
 				}
 
@@ -85,7 +85,7 @@ public class mainES {
 					es.setLambda(lambda);
 					es.setOperatorFlag("mutate");
 
-					String bestResult = String.valueOf(es.run_Plus_ES());
+					String bestResult = String.valueOf(es.run_Dot_ES());
 					mutateLogger.info(bestResult);
 				}
 
