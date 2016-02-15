@@ -2,6 +2,9 @@ package main;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 /**
  * MuLambdaES employs Mu-Lambda Evolutionary Strategy to optimize wind farm layout for certain given wind
@@ -9,6 +12,9 @@ import java.util.Arrays;
  * parents make in total. Notice that Lambda should be a multiple of Mu. ES practitioners usually refer to
  * their algorithm by the choice of Mu & Lambda. For example, if Mu = 5 and λ = 20, then we have a (5, 20) -
  * ES.
+ * 
+ * There is a design flaw of the algorithm that if there is a bad model applied here, might result in nonsence
+ * fitness predictions, e.g. negative values.
  * 
  * @author zhengchen
  * @version Best stratergy
@@ -37,6 +43,8 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 	@Override
 	public void evaluate_ML() {
 
+		FitnessToLayout_Map = new TreeMap<>();
+
 		// Using the surrogate model to evaluate all lambda offspring.
 		for (int p = 0; p < populations.size(); p++) {
 			double[][] layout = populations.get(p);
@@ -50,26 +58,24 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 			}
 
 			fitnesses[p] = coe_predicted;
+			FitnessToLayout_Map.put(coe_predicted, layout);
 		}
 
 		// Using the surrogate model to evaluate all the lambda offsprings to find out the best lambda_star
 		// individuals.
-		ArrayList<Double> tempFitnesses = new ArrayList<>();
-		for (Double fitness : fitnesses) {
-			tempFitnesses.add(fitness);
-		}
-
-		Arrays.sort(fitnesses);
-
-		// Using the expensive real evaluation function to re-evaluate these lambda_star individuals.
-		for (int i = 0; i < lambda_star; i++) {
-			wfle.evaluate(populations.get(tempFitnesses.indexOf(fitnesses[i])));
-			fitnesses[i] = wfle.getEnergyCost();
+		Iterator layoutIterator = FitnessToLayout_Map.entrySet().iterator();
+		int counter = 0;
+		while (layoutIterator.hasNext() && counter < lambda_star) {
+			counter++;
+			Entry<Double, double[][]> entry = (Entry<Double, double[][]>) layoutIterator.next();
+			// Using the expensive real evaluation function to re-evaluate these lambda_star individuals.
+			wfle.evaluate(entry.getValue());
+			fitnesses[counter] = wfle.getEnergyCost();
 		}
 
 		// Finding out is there any improvement.
 		double minFitness = Double.MAX_VALUE;
-		for (int p = 0; p < lambda_star; p++) { // Used to be p < fitness.length
+		for (int p = 0; p < fitnesses.length; p++) {
 			if (fitnesses[p] < minFitness) {
 				minFitness = fitnesses[p];
 			}
@@ -129,6 +135,11 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 
 	}
 
+	public double calculateRealFitness() {
+		wfle.evaluate(FitnessToLayout_Map.firstEntry().getValue());
+		return wfle.getEnergyCost();
+	}
+
 	@Override
 	public double run() {
 
@@ -153,7 +164,11 @@ public class MuLambdaESML_Best extends MuLambdaESML {
 
 		System.out.println("Searching Evaluations:" + WindFarmLayoutEvaluator.getNumberOfEvaluation());
 
+		System.out.println("Best Fitness in Raw: " + bestFitness);
+		bestFitness = calculateRealFitness();
+
 		return bestFitness;
 
 	}
+
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 
 import my.weka.MyDenseInstance;
 import weka.classifiers.Classifier;
@@ -46,6 +47,10 @@ public class MuLambdaESML {
 	double[] fitnesses;
 	double[] fitnesses_best;
 	double bestFitness;
+	double[][] bestLayout; // To store the best layout that have found so far.
+
+	TreeMap<Double, double[][]> FitnessToLayout_Map; // A map to store Layout-to-Fitness.
+
 	Random random;
 	int num_Turbines; // number of turbines in the wind farm.
 	int maxEvaluations;
