@@ -27,7 +27,7 @@ public class mainESML_M5P {
 	static int runs = 30;
 	static int maxEvaluations = 2000;
 
-	static String EA_Stratergy = "Pre"; // Pre-selection or Best-selection
+	static String EA_Stratergy = "Best"; // Pre-selection or Best-selection
 
 	static String dataFormat = "polar"; // Raw data format or Polar data format
 

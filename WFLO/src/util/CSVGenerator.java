@@ -33,9 +33,9 @@ public class CSVGenerator {
 	public static void main(String[] args) throws IOException {
 
 		CSVGenerator generator = new CSVGenerator();
-		CSVWriter csvWriter = new CSVWriter(new FileWriter("csv/results.csv"));
+		CSVWriter csvWriter = new CSVWriter(new FileWriter("csv/ES_ML_Best_results.csv"));
 
-		File logFoler = new File("Logs_(mu+lambda)/");
+		File logFoler = new File("Logs_ML_Best/");
 		File[] listOfFiles = logFoler.listFiles();
 
 		ArrayList<String> linesList = new ArrayList<String>();
